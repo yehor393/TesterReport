@@ -1,4 +1,4 @@
-path: C:\Users\yehor\Pictures\Dataplates 
+path: C:\Users\yehor\Pictures\Dataplates
 train: train\images # train images (relative to 'path') 
 val: val\images # val images (relative to 'path') 
 
