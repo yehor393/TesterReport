@@ -1,8 +1,7 @@
-path: C:\Users\yehor\Pictures\Dataplates
+path: C:\Users\yehor\Pictures\Dataplates\mix
 train: train\images # train images (relative to 'path') 
 val: val\images # val images (relative to 'path') 
 
 # Classes 
 names: 
-  0: model
-  1: serial
+  0: field
