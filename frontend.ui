@@ -133,7 +133,7 @@
      </palette>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="OutsideTab">
      <attribute name="title">
@@ -320,6 +320,11 @@
         <height>22</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+       </font>
+      </property>
      </widget>
      <widget class="QLineEdit" name="lineEdit_12">
       <property name="geometry">
@@ -329,6 +334,11 @@
         <width>113</width>
         <height>22</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>Arial</family>
+       </font>
       </property>
      </widget>
      <widget class="QCheckBox" name="checkBox">
@@ -373,6 +383,11 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
+    </property>
     <property name="placeholderText">
      <string>Order number</string>
     </property>
@@ -398,6 +413,11 @@
       <width>111</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
     </property>
     <property name="placeholderText">
      <string>PRD</string>
@@ -425,6 +445,11 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
+    </property>
     <property name="placeholderText">
      <string>Model</string>
     </property>
@@ -450,6 +475,11 @@
       <width>111</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
     </property>
     <property name="placeholderText">
      <string>Serial</string>
@@ -487,6 +517,11 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
+    </property>
     <property name="placeholderText">
      <string>Initial of builder</string>
     </property>
@@ -512,6 +547,11 @@
       <width>111</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+     </font>
     </property>
     <property name="placeholderText">
      <string>Initial of tester</string>

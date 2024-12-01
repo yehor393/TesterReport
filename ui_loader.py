@@ -88,6 +88,11 @@ class HeaterTestApp(QMainWindow):
                     elif "fill_button" in button.objectName():
                         button.clicked.connect(lambda _, b=button: self.fill_fields(b))
 
+    def clear_tabs(self):
+        """Видаляє всі вкладки."""
+        while self.tab_widget.count() > 0:
+            self.tab_widget.removeTab(0)
+
     def clear_all_checkboxes(self):
         """Очищує всі чекбокси на всіх вкладках."""
         for index in range(self.tab_widget.count()):
@@ -122,31 +127,38 @@ class HeaterTestApp(QMainWindow):
         return widget
     
 
-    def clear_all_fields(self, index):
-        """Очищення чекбоксів у заданій вкладці."""
-        for checkbox in self.checkbox_lists.get(index, []):
-            checkbox.setChecked(False)
-
-
-    def fill_all_fields(self, index):
-        """Заповнення чекбоксів у заданій вкладці."""
-        for checkbox in self.checkbox_lists.get(index, []):
-            checkbox.setChecked(True)
-
-
     def generate_pdf(self):
-        """Збір даних та виклик функції створення PDF."""
-        # Збір даних
-        model = self.model_input.text()
-        serial = self.serial_input.text()
-        checkbox_results = [f"Checkbox {i+1}: {'Checked' if checkbox.isChecked() else 'Unchecked'}"
-                            for i, checkbox in enumerate(self.checkbox_list)]
+        """Виклик функції для створення PDF зі всією логікою."""
+        model = self.model_input.text().strip()
+        serial = self.serial_input.text().strip()
 
-        # Виклик функції для створення PDF
-        generate_pdf_report(model, serial, checkbox_results)
+        # Передаємо дані про модель, серійний номер, вкладки у функцію генерації звіту
+        try:
+            generate_pdf_report(model, serial, self.tab_widget)
+            self.clear_after_post()
+        except Exception as e:
+            print(f"Помилка при створенні PDF: {e}")
 
+    def clear_after_post(self):
+        """Очищає всі вкладки, чекбокси та текстові поля після POST."""
+        # Очищення вкладок
 
-    def clear_tabs(self):
-        """Видаляє всі вкладки."""
-        while self.tab_widget.count() > 0:
-            self.tab_widget.removeTab(0)
+        # Очищення чекбоксів на всіх вкладках
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            if tab:
+                # Очищення чекбоксів
+                checkboxes = tab.findChildren(QCheckBox)
+                for checkbox in checkboxes:
+                    checkbox.setChecked(False)
+
+                # Очищення текстових полів
+                text_fields = tab.findChildren(QLineEdit)
+                for text_field in text_fields:
+                    text_field.clear()
+                    
+        # Очищення текстових полів
+        self.model_input.clear()
+        self.serial_input.clear()
+        
+        self.clear_tabs()
