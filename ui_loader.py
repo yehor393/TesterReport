@@ -1,138 +1,225 @@
 from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton
 from PyQt5.uic import loadUi
 from pdf_generator import generate_pdf_report
+import csv
+from PyQt5.QtCore import QTimer, Qt
+import re
 
 class HeaterTestApp(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Завантаження UI
+        # Load UI
         loadUi("frontend.ui", self)
 
-
-        # Отримання доступу до елементів інтерфейсу
+        # Get UI elements
         self.tab_widget: QTabWidget = self.findChild(QTabWidget, "tabWidget")
+        self.serial_input: QLineEdit = self.findChild(QLineEdit, "serial_input")
+        self.model_input: QLineEdit = self.findChild(QLineEdit, "line_model")
+        self.post_button: QPushButton = self.findChild(QPushButton, "post_button")
 
-        self.serial_input: QLineEdit = self.findChild(QLineEdit, "serial_input")  # Поле серійного номера
-        self.model_input: QLineEdit = self.findChild(QLineEdit, "line_model")  # Замініть "modelInput" на ім'я вашого QLineEdit
-
-        self.post_button: QPushButton = self.findChild(QPushButton, "post_button")  # Кнопка для створення PDF
-
-        # Підключення кнопок до функцій
+        # Connect signals
         self.post_button.clicked.connect(self.generate_pdf)
+        self.model_input.returnPressed.connect(self.on_model_entered)
 
-        # Підключаємо подію введення тексту
-        self.model_input.editingFinished.connect(self.on_model_entered)
-
-        # Зберігаємо вкладки як окремі віджети
+        # Save tabs as separate widgets
         self.outside_steam = self.tab_widget.widget(0)
         self.outside_convector = self.tab_widget.widget(1)
         self.value = self.tab_widget.widget(2)
         self.final = self.tab_widget.widget(3)
 
-        # Видаляємо всі вкладки на старті
+        # Remove all tabs at start
         self.clear_tabs()
 
-
+        # Flag to prevent redundant calls
+        
     def on_model_entered(self):
-        """Обробляємо подію після введення моделі."""
-        model = self.model_input.text().strip()  # Отримуємо текст із поля введення
-
-        if model:  # Перевіряємо, чи введено модель
+        """Handle event after entering the model."""
+        model = self.model_input.text().strip()
+        
+        if model:
+            self.clear_all_fields()
             self.set_tabs_for_model(model)
-        else:  # Якщо поле порожнє
-            self.clear_tabs() 
+            self.initialize_value_tab(model)
+        else:
+            self.clear_tabs()
 
 
     def set_tabs_for_model(self, model):
-        """Додає потрібні вкладки залежно від моделі."""
-        self.clear_all_checkboxes()
+        """Add the required tabs based on the model."""
         self.clear_tabs()
-        if model == "FX6":
-            self.tab_widget.addTab(self.outside_steam, "Outside")
-            self.tab_widget.addTab(self.value, "Value")
-            self.tab_widget.addTab(self.final, "Final")
-        elif model == "CX1":
-            self.tab_widget.addTab(self.outside_convector, "Outside")
-            self.tab_widget.addTab(self.value, "Value")
-            self.tab_widget.addTab(self.final, "Final")
-        else:
-            self.clear_tabs()
-            
+        if model.startswith("FX6"):
+            self.tab_widget.addTab(self.outside_steam, "Outside Steam")
+        elif model.startswith("CX1"):
+            self.tab_widget.addTab(self.outside_convector, "Outside Convector")
+        
+        self.tab_widget.addTab(self.value, "Value")
+        self.tab_widget.addTab(self.final, "Final")
+
         self.initialize_active_tab()
 
+    def initialize_value_tab(self, model):
+        """Initialize the Value tab after creation."""
+        voltage, watts = self.extract_voltage_and_watts(model)
+
+        # Find elements in the Value tab
+        self.voltage_input: QLineEdit = self.value.findChild(QLineEdit, "voltage_input")
+        self.watts_input: QLineEdit = self.value.findChild(QLineEdit, "watts_input")
+        self.resistance_input: QLineEdit = self.value.findChild(QLineEdit, "resistance_input")
+
+        # Update Voltage and Watts fields
+        self.voltage_input.setText(str(voltage))
+        self.watts_input.setText(str(watts))
+
+        # Clear resistance input field
+        self.resistance_input.clear()
+
+        # Read resistance range from CSV
+        resistance_data = self.read_csv_data(voltage, watts)
+        if resistance_data:
+            min_resistance = resistance_data["ResistanceMin"]
+            max_resistance = resistance_data["ResistanceMax"]
+            self.resistance_range = (min_resistance, max_resistance)
+
+            # Highlight fields if data is available
+            self.voltage_input.setStyleSheet("background-color: lightgreen;")
+            self.watts_input.setStyleSheet("background-color: lightgreen;")
+
+            # Connect resistance validation only once
+            try:
+                self.resistance_input.textChanged.disconnect()
+            except TypeError:
+                pass
+            self.resistance_input.textChanged.connect(
+                lambda: self.validate_resistance(min_resistance, max_resistance)
+            )
+        else:
+            # Clear highlighting if data is not available
+            self.voltage_input.setStyleSheet("")
+            self.watts_input.setStyleSheet("")
+            self.resistance_input.clear()
+            self.resistance_input.setStyleSheet("background-color: orange;")
+            self.resistance_range = None
+
+        print(f"initialize_value_tab called for model: {model}")
+
+    def read_csv_data(self, voltage, watts):
+        """Read data from CSV based on Voltage and Watts."""
+        try:
+            with open("values.csv", mode="r") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if int(row["Voltage"]) == voltage and int(row["Watts"]) == watts:
+                        print(f"Дані для {voltage} Вольт і {watts} Ватт знайдено в таблиці.")
+                        return {
+                            "ResistanceMin": float(row["ResistanceMin"]),
+                            "ResistanceMax": float(row["ResistanceMax"]),
+                        }
+        except (FileNotFoundError, ValueError, KeyError) as e:
+            print(f"Помилка при зчитуванні файлу values.csv: {e}")
+        print(f"Дані для {voltage} Вольт і {watts} Ватт не знайдено в таблиці.")
+        return None
+
+    def extract_voltage_and_watts(self, model):
+        """Calculate Voltage and Watts values from the model."""
+        voltage = 0
+        watts = 0
+
+        match_voltage = re.search(r"-\d{3}", model)
+        if match_voltage:
+            voltage = int(match_voltage.group(0)[1:])
+
+        match_watts = re.search(r"-\d{3}-", model)
+        if match_watts:
+            watts = int(match_watts.group(0)[1:4]) * 100
+
+        print(f"extract_voltage_and_watts called for model: {model}, voltage: {voltage}, watts: {watts}")
+        return voltage, watts
 
     def initialize_active_tab(self):
-        """Ініціалізація всіх вкладок після введення моделі."""
-        self.checkbox_lists = {}  # Словник для чекбоксів кожної вкладки
+        """Initialize all active tabs after entering the model."""
+        self.checkbox_lists = {}
 
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
-            
-            # Знаходимо чекбокси тільки у поточній вкладці
             self.checkbox_lists[index] = tab.findChildren(QCheckBox)
-
-            # Знайти всі кнопки на вкладці
             buttons = tab.findChildren(QPushButton)
 
-            # Обробити кнопки за іменами
             for button in buttons:
-                    
-                    try:
-                        button.clicked.disconnect()
-                    except TypeError:
-                        pass
-                    
-                    if "clear_button" in button.objectName():
-                        button.clicked.connect(lambda _, b=button: self.clear_fields(b))
-                    elif "fill_button" in button.objectName():
-                        button.clicked.connect(lambda _, b=button: self.fill_fields(b))
+                try:
+                    button.clicked.disconnect()
+                except TypeError:
+                    pass
+                
+                if "clear_button" in button.objectName():
+                    button.clicked.connect(lambda _, b=button: self.clear_fields(b))
+                elif "fill_button" in button.objectName():
+                    button.clicked.connect(lambda _, b=button: self.fill_fields(b))
+
+        print(f"initialize_active_tab called with {self.tab_widget.count()} tabs")
+
+    def validate_resistance(self, min_resistance, max_resistance):
+        """Validate the Resistance value."""
+        try:
+            resistance = float(self.resistance_input.text())
+            if min_resistance <= resistance <= max_resistance:
+                self.resistance_input.setStyleSheet("background-color: lightgreen;")
+            else:
+                self.resistance_input.setStyleSheet("background-color: lightcoral;")
+        except ValueError:
+            if self.resistance_input.text().strip() == "":
+                self.resistance_input.setStyleSheet("")
+            else:
+                self.resistance_input.setStyleSheet("background-color: lightcoral;")
+
+    def clear_fields(self, button):
+        """Clear fields related to the button."""
+        tab = self.get_parent_tab(button)
+        if tab:
+            checkboxes = tab.findChildren(QCheckBox)
+            for checkbox in checkboxes:
+                checkbox.setChecked(False)
+        print(f"clear_fields called for button: {button.objectName()}")
+
+    def fill_fields(self, button):
+        """Fill fields related to the button."""
+        tab = self.get_parent_tab(button)
+        if tab:
+            checkboxes = tab.findChildren(QCheckBox)
+            for checkbox in checkboxes:
+                checkbox.setChecked(True)
+        button.setFocus()
+        print(f"fill_fields called for button: {button.objectName()}")
 
     def clear_tabs(self):
-        """Видаляє всі вкладки."""
+        """Remove all tabs."""
         while self.tab_widget.count() > 0:
             self.tab_widget.removeTab(0)
+        print("clear_tabs called")
 
-    def clear_all_checkboxes(self):
-        """Очищує всі чекбокси на всіх вкладках."""
+    def clear_all_fields(self):
+        """Clear all checkboxes and text fields (QLineEdit) on all tabs."""
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
             checkboxes = tab.findChildren(QCheckBox)
             for checkbox in checkboxes:
                 checkbox.setChecked(False)
-                
-    def clear_fields(self, button):
-        """Очищення полів, пов'язаних із кнопкою."""
-        tab = self.get_parent_tab(button)  # Отримуємо вкладку
-        if tab:  # Перевіряємо, чи вкладка знайдена
-            checkboxes = tab.findChildren(QCheckBox)  # Знаходимо чекбокси у вкладці
-            for checkbox in checkboxes:
-                checkbox.setChecked(False)
-
-
-    def fill_fields(self, button):
-        """Заповнення полів, пов'язаних із кнопкою."""
-        tab = self.get_parent_tab(button)  # Отримуємо вкладку
-        if tab:  # Перевіряємо, чи вкладка знайдена
-            checkboxes = tab.findChildren(QCheckBox)  # Знаходимо чекбокси у вкладці
-            for checkbox in checkboxes:
-                checkbox.setChecked(True)
-            # Повернути фокус на кнопку
-        button.setFocus()
+            line_edits = tab.findChildren(QLineEdit)
+            for line_edit in line_edits:
+                line_edit.clear()
+        print("clear_all_fields called")
 
     def get_parent_tab(self, widget):
-        """Отримати вкладку, якій належить віджет."""
+        """Get the tab to which the widget belongs."""
         while widget and widget not in [self.tab_widget.widget(i) for i in range(self.tab_widget.count())]:
             widget = widget.parent()
         return widget
-    
 
     def generate_pdf(self):
-        """Виклик функції для створення PDF зі всією логікою."""
+        """Call the function to create a PDF report."""
         model = self.model_input.text().strip()
         serial = self.serial_input.text().strip()
 
-        # Передаємо дані про модель, серійний номер, вкладки у функцію генерації звіту
         try:
             generate_pdf_report(model, serial, self.tab_widget)
             self.clear_after_post()
@@ -140,25 +227,7 @@ class HeaterTestApp(QMainWindow):
             print(f"Помилка при створенні PDF: {e}")
 
     def clear_after_post(self):
-        """Очищає всі вкладки, чекбокси та текстові поля після POST."""
-        # Очищення вкладок
-
-        # Очищення чекбоксів на всіх вкладках
-        for index in range(self.tab_widget.count()):
-            tab = self.tab_widget.widget(index)
-            if tab:
-                # Очищення чекбоксів
-                checkboxes = tab.findChildren(QCheckBox)
-                for checkbox in checkboxes:
-                    checkbox.setChecked(False)
-
-                # Очищення текстових полів
-                text_fields = tab.findChildren(QLineEdit)
-                for text_field in text_fields:
-                    text_field.clear()
-                    
-        # Очищення текстових полів
-        self.model_input.clear()
-        self.serial_input.clear()
-        
+        """Clear all tabs, checkboxes, and text fields after POST."""
+        self.clear_all_fields()
         self.clear_tabs()
+        print("clear_after_post called")
