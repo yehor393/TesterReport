@@ -40,7 +40,6 @@ class HeaterTestApp(QMainWindow):
         if model:
             self.clear_all_fields()
             self.set_tabs_for_model(model)
-            self.initialize_value_tab(model)
         else:
             self.clear_tabs()
 
@@ -53,6 +52,7 @@ class HeaterTestApp(QMainWindow):
         elif model.startswith("CX1"):
             self.tab_widget.addTab(self.outside_convector, "Outside Convector")
         
+        self.initialize_value_tab(model)
         self.tab_widget.addTab(self.value, "Value")
         self.tab_widget.addTab(self.final, "Final")
 
@@ -74,8 +74,15 @@ class HeaterTestApp(QMainWindow):
         # Clear resistance input field
         self.resistance_input.clear()
 
-        # Read resistance range from CSV
+        # Read resistance range from CSV only if voltage and watts exist on the same row
         resistance_data = self.read_csv_data(voltage, watts)
+
+        # Disconnect resistance validation before updating logic
+        try:
+            self.resistance_input.textChanged.disconnect()
+        except TypeError:
+            pass
+
         if resistance_data:
             min_resistance = resistance_data["ResistanceMin"]
             max_resistance = resistance_data["ResistanceMax"]
@@ -85,23 +92,24 @@ class HeaterTestApp(QMainWindow):
             self.voltage_input.setStyleSheet("background-color: lightgreen;")
             self.watts_input.setStyleSheet("background-color: lightgreen;")
 
-            # Connect resistance validation only once
-            try:
-                self.resistance_input.textChanged.disconnect()
-            except TypeError:
-                pass
+            # Connect resistance validation
             self.resistance_input.textChanged.connect(
                 lambda: self.validate_resistance(min_resistance, max_resistance)
             )
         else:
-            # Clear highlighting if data is not available
-            self.voltage_input.setStyleSheet("")
-            self.watts_input.setStyleSheet("")
-            self.resistance_input.clear()
-            self.resistance_input.setStyleSheet("background-color: orange;")
-            self.resistance_range = None
+            self.clear_resistance_fields()
 
         print(f"initialize_value_tab called for model: {model}")
+
+
+    def clear_resistance_fields(self):
+        """Clear resistance input and reset styles."""
+        self.voltage_input.setStyleSheet("")
+        self.watts_input.setStyleSheet("")
+        self.resistance_input.clear()
+        self.resistance_input.setStyleSheet("background-color: orange;")
+        self.resistance_range = None
+
 
     def read_csv_data(self, voltage, watts):
         """Read data from CSV based on Voltage and Watts."""
@@ -112,13 +120,17 @@ class HeaterTestApp(QMainWindow):
                     if int(row["Voltage"]) == voltage and int(row["Watts"]) == watts:
                         print(f"Дані для {voltage} Вольт і {watts} Ватт знайдено в таблиці.")
                         return {
+                            "Voltage": int(row["Voltage"]),
+                            "Watts": int(row["Watts"]),
                             "ResistanceMin": float(row["ResistanceMin"]),
                             "ResistanceMax": float(row["ResistanceMax"]),
                         }
         except (FileNotFoundError, ValueError, KeyError) as e:
             print(f"Помилка при зчитуванні файлу values.csv: {e}")
+        
         print(f"Дані для {voltage} Вольт і {watts} Ватт не знайдено в таблиці.")
         return None
+
 
     def extract_voltage_and_watts(self, model):
         """Calculate Voltage and Watts values from the model."""
