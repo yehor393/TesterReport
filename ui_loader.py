@@ -47,13 +47,13 @@ class HeaterTestApp(QMainWindow):
     def set_tabs_for_model(self, model):
         """Add the required tabs based on the model."""
         self.clear_tabs()
-        if model.startswith("FX6"):
+        if model.startswith("HP"):
             self.tab_widget.addTab(self.outside_steam, "Outside Steam")
         elif model.startswith("CX1"):
             self.tab_widget.addTab(self.outside_convector, "Outside Convector")
+            self.tab_widget.addTab(self.value, "Value")
+            self.initialize_value_tab(model)
         
-        self.initialize_value_tab(model)
-        self.tab_widget.addTab(self.value, "Value")
         self.tab_widget.addTab(self.final, "Final")
 
         self.initialize_active_tab()
