@@ -1,6 +1,6 @@
 import os
 from fpdf import FPDF
-from PyQt5.QtWidgets import QCheckBox  # Необхідно імпортувати
+from PyQt5.QtWidgets import QCheckBox
 
 def generate_pdf_report(model, serial, tab_widget):
     """Генерація PDF-звіту на основі даних моделі, серійного номера та вкладок."""
@@ -13,8 +13,10 @@ def generate_pdf_report(model, serial, tab_widget):
     pdf = FPDF()
     pdf.add_page()
 
+    font_path = os.path.abspath("types/Arial.ttf")
+
     # Додавання шрифту Arial
-    pdf.add_font('Arial', '', 'Arial.ttf', uni=True)
+    pdf.add_font('Arial', '', font_path, uni=True)
     pdf.set_font("Arial", size=12)
 
     # Додавання заголовка

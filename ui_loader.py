@@ -52,15 +52,39 @@ class HeaterTestApp(QMainWindow):
         elif model.startswith("CX1"):
             self.tab_widget.addTab(self.outside_convector, "Outside Convector")
             self.tab_widget.addTab(self.value, "Value")
-            self.initialize_value_tab(model)
+            self.convector_value_tab(model)
         
         self.tab_widget.addTab(self.final, "Final")
 
-        self.initialize_active_tab()
+        self.initialize_boxes_and_bottons()
 
-    def initialize_value_tab(self, model):
+
+    def initialize_boxes_and_bottons(self):
+        """Initialize all active boxes and bottons after entering the model."""
+        self.checkbox_lists = {}
+
+        for index in range(self.tab_widget.count()):
+            tab = self.tab_widget.widget(index)
+            self.checkbox_lists[index] = tab.findChildren(QCheckBox)
+            buttons = tab.findChildren(QPushButton)
+
+            for button in buttons:
+                try:
+                    button.clicked.disconnect()
+                except TypeError:
+                    pass
+                
+                if "clear_button" in button.objectName():
+                    button.clicked.connect(lambda _, b=button: self.clear_fields(b))
+                elif "fill_button" in button.objectName():
+                    button.clicked.connect(lambda _, b=button: self.fill_fields(b))
+
+        print(f"initialize_boxes_and_bottons called with {self.tab_widget.count()} tabs")
+
+
+    def convector_value_tab(self, model):
         """Initialize the Value tab after creation."""
-        voltage, watts = self.extract_voltage_and_watts(model)
+        voltage, watts = self.convector_split_model(model)
 
         # Find elements in the Value tab
         self.voltage_input: QLineEdit = self.value.findChild(QLineEdit, "voltage_input")
@@ -75,7 +99,7 @@ class HeaterTestApp(QMainWindow):
         self.resistance_input.clear()
 
         # Read resistance range from CSV only if voltage and watts exist on the same row
-        resistance_data = self.read_csv_data(voltage, watts)
+        resistance_data = self.convector_read_csv(voltage, watts)
 
         # Disconnect resistance validation before updating logic
         try:
@@ -102,19 +126,23 @@ class HeaterTestApp(QMainWindow):
         print(f"initialize_value_tab called for model: {model}")
 
 
-    def clear_resistance_fields(self):
-        """Clear resistance input and reset styles."""
-        self.voltage_input.setStyleSheet("")
-        self.watts_input.setStyleSheet("")
-        self.resistance_input.clear()
-        self.resistance_input.setStyleSheet("background-color: orange;")
-        self.resistance_range = None
+    def convector_split_model(self, model):
+        """Calculate Voltage and Watts values from the model."""
+        voltage = 0
+        watts = 0
+
+        model_split = model.split("-")
+        voltage = int(model_split[1][:3])
+        watts = int(model_split[2][:3]) * 100
+
+        print(f"Voltage: {voltage}, Watts: {watts}")
+        return voltage, watts
 
 
-    def read_csv_data(self, voltage, watts):
+    def convector_read_csv(self, voltage, watts):
         """Read data from CSV based on Voltage and Watts."""
         try:
-            with open("values.csv", mode="r") as file:
+            with open("tables/values.csv", mode="r") as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     if int(row["Voltage"]) == voltage and int(row["Watts"]) == watts:
@@ -132,43 +160,14 @@ class HeaterTestApp(QMainWindow):
         return None
 
 
-    def extract_voltage_and_watts(self, model):
-        """Calculate Voltage and Watts values from the model."""
-        voltage = 0
-        watts = 0
+    def clear_resistance_fields(self):
+        """Clear resistance input and reset styles."""
+        self.voltage_input.setStyleSheet("")
+        self.watts_input.setStyleSheet("")
+        self.resistance_input.clear()
+        self.resistance_input.setStyleSheet("background-color: orange;")
+        self.resistance_range = None
 
-        match_voltage = re.search(r"-\d{3}", model)
-        if match_voltage:
-            voltage = int(match_voltage.group(0)[1:])
-
-        match_watts = re.search(r"-\d{3}-", model)
-        if match_watts:
-            watts = int(match_watts.group(0)[1:4]) * 100
-
-        print(f"extract_voltage_and_watts called for model: {model}, voltage: {voltage}, watts: {watts}")
-        return voltage, watts
-
-    def initialize_active_tab(self):
-        """Initialize all active tabs after entering the model."""
-        self.checkbox_lists = {}
-
-        for index in range(self.tab_widget.count()):
-            tab = self.tab_widget.widget(index)
-            self.checkbox_lists[index] = tab.findChildren(QCheckBox)
-            buttons = tab.findChildren(QPushButton)
-
-            for button in buttons:
-                try:
-                    button.clicked.disconnect()
-                except TypeError:
-                    pass
-                
-                if "clear_button" in button.objectName():
-                    button.clicked.connect(lambda _, b=button: self.clear_fields(b))
-                elif "fill_button" in button.objectName():
-                    button.clicked.connect(lambda _, b=button: self.fill_fields(b))
-
-        print(f"initialize_active_tab called with {self.tab_widget.count()} tabs")
 
     def validate_resistance(self, min_resistance, max_resistance):
         """Validate the Resistance value."""
@@ -184,6 +183,7 @@ class HeaterTestApp(QMainWindow):
             else:
                 self.resistance_input.setStyleSheet("background-color: lightcoral;")
 
+
     def clear_fields(self, button):
         """Clear fields related to the button."""
         tab = self.get_parent_tab(button)
@@ -192,6 +192,7 @@ class HeaterTestApp(QMainWindow):
             for checkbox in checkboxes:
                 checkbox.setChecked(False)
         print(f"clear_fields called for button: {button.objectName()}")
+
 
     def fill_fields(self, button):
         """Fill fields related to the button."""
@@ -203,11 +204,13 @@ class HeaterTestApp(QMainWindow):
         button.setFocus()
         print(f"fill_fields called for button: {button.objectName()}")
 
+
     def clear_tabs(self):
         """Remove all tabs."""
         while self.tab_widget.count() > 0:
             self.tab_widget.removeTab(0)
         print("clear_tabs called")
+
 
     def clear_all_fields(self):
         """Clear all checkboxes and text fields (QLineEdit) on all tabs."""
@@ -221,11 +224,13 @@ class HeaterTestApp(QMainWindow):
                 line_edit.clear()
         print("clear_all_fields called")
 
+
     def get_parent_tab(self, widget):
         """Get the tab to which the widget belongs."""
         while widget and widget not in [self.tab_widget.widget(i) for i in range(self.tab_widget.count())]:
             widget = widget.parent()
         return widget
+    
 
     def generate_pdf(self):
         """Call the function to create a PDF report."""
@@ -237,6 +242,7 @@ class HeaterTestApp(QMainWindow):
             self.clear_after_post()
         except Exception as e:
             print(f"Помилка при створенні PDF: {e}")
+
 
     def clear_after_post(self):
         """Clear all tabs, checkboxes, and text fields after POST."""
