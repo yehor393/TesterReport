@@ -130,12 +130,15 @@ class HeaterTestApp(QMainWindow):
         """Calculate Voltage and Watts values from the model."""
         voltage = 0
         watts = 0
+        thermostat = False
 
         model_split = model.split("-")
         voltage = int(model_split[1][:3])
         watts = int(model_split[2][:3]) * 100
-
-        print(f"Voltage: {voltage}, Watts: {watts}")
+        thermo = str(model_split[-1])
+        if thermo == 'T':
+            thermostat = True
+        print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}")
         return voltage, watts
 
 
