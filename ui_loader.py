@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton, QGroupBox, QButtonGroup
 from PyQt5.uic import loadUi
 from pdf_generator import generate_pdf_report
 import csv
@@ -62,11 +62,26 @@ class HeaterTestApp(QMainWindow):
     def initialize_boxes_and_bottons(self):
         """Initialize all active boxes and bottons after entering the model."""
         self.checkbox_lists = {}
+        self.button_groups = {} 
 
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
             self.checkbox_lists[index] = tab.findChildren(QCheckBox)
             buttons = tab.findChildren(QPushButton)
+
+            group_box = tab.findChild(QGroupBox, "groupBox") 
+            if group_box:
+                # Створюємо QButtonGroup для кнопок у цьому QGroupBox
+                button_group = QButtonGroup(self)
+                button_group.setExclusive(True)  # Встановлюємо ексклюзивність для групи
+
+                # Додаємо всі QPushButton у QButtonGroup
+                buttons_in_group = group_box.findChildren(QPushButton)
+                for button in buttons_in_group:
+                    button_group.addButton(button)
+
+                # Зберігаємо групу у словник для доступу
+                self.button_groups[index] = button_group
 
             for button in buttons:
                 try:
@@ -84,7 +99,7 @@ class HeaterTestApp(QMainWindow):
 
     def convector_value_tab(self, model):
         """Initialize the Value tab after creation."""
-        voltage, watts = self.convector_split_model(model)
+        voltage, watts, thermostat, enclosure = self.convector_split_model(model)
 
         # Find elements in the Value tab
         self.voltage_input: QLineEdit = self.value.findChild(QLineEdit, "voltage_input")
@@ -131,15 +146,23 @@ class HeaterTestApp(QMainWindow):
         voltage = 0
         watts = 0
         thermostat = False
+        enclosure = ""
 
         model_split = model.split("-")
         voltage = int(model_split[1][:3])
         watts = int(model_split[2][:3]) * 100
         thermo = str(model_split[-1])
+
         if thermo == 'T':
             thermostat = True
-        print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}")
-        return voltage, watts
+
+        if 'IIC' in model_split:
+            enclosure = 'IIC'
+        elif 'IIB' in model_split:
+            enclosure = 'IIB'
+
+        print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}, Enclosure: {enclosure}")
+        return voltage, watts, thermostat, enclosure
 
 
     def convector_read_csv(self, voltage, watts):
