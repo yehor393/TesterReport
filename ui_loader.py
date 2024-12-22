@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton, QGroupBox, QButtonGroup
+from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton
 from PyQt5.uic import loadUi
 from pdf_generator import generate_pdf_report
 import csv
@@ -62,7 +62,6 @@ class HeaterTestApp(QMainWindow):
     def initialize_boxes_and_buttons(self):
         """Initialize all active boxes, buttons, and QButtonGroups after entering the model."""
         self.checkbox_lists = {}
-        self.button_groups = {}
 
         for index in range(self.tab_widget.count()):
             tab = self.tab_widget.widget(index)
@@ -73,25 +72,6 @@ class HeaterTestApp(QMainWindow):
             # Initialize all buttons
             buttons = tab.findChildren(QPushButton)
 
-            # Automatically create QButtonGroup for each QGroupBox
-            group_boxes = tab.findChildren(QGroupBox)
-            for group_box in group_boxes:
-                # Create QButtonGroup for buttons in this QGroupBox
-                button_group = QButtonGroup(self)
-                button_group.setExclusive(False)
-
-                # Add all QPushButtons to QButtonGroup
-                buttons_in_group = group_box.findChildren(QPushButton)
-                for button in buttons_in_group:
-                    button.setCheckable(True)
-                    button_group.addButton(button)
-                    button.clicked.connect(lambda _, b=button, g=button_group: self.toggle_button(b, g))
-
-                # Store the group in a dictionary for access
-                group_name = group_box.objectName()
-                self.button_groups[group_name] = button_group
-
-            # Clear signals and reassign button actions
             for button in buttons:
                 try:
                     button.clicked.disconnect()
@@ -105,28 +85,6 @@ class HeaterTestApp(QMainWindow):
                     button.clicked.connect(lambda _, b=button: self.fill_fields(b))
 
         print(f"initialize_boxes_and_buttons called with {self.tab_widget.count()} tabs")
-
-
-    def toggle_button(self, button, group):
-        """Toggle button selection in QButtonGroup."""
-        if not isinstance(button, QPushButton):
-            print(f"Error: {button} is not a QPushButton. Type: {type(button)}")
-            return
-
-        if not isinstance(group, QButtonGroup):
-            print(f"Error: {group} is not a QButtonGroup. Type: {type(group)}")
-            return
-
-        if not button.isCheckable():
-            print(f"Error: Button '{button.text()}' is not checkable.")
-            return
-
-        if button.isChecked():
-            print(f"Unchecking button: {button.text()}")
-            button.setChecked(False)
-        else:
-            print(f"Checking button: {button.text()}")
-            button.setChecked(True)
 
 
     def convector_value_tab(self, model):
@@ -178,13 +136,11 @@ class HeaterTestApp(QMainWindow):
         voltage = 0
         watts = 0
         thermostat = False
-        enclosure = ""
 
         model_split = model.split("-")
         voltage = int(model_split[1][:3])
         watts = int(model_split[2][:3]) * 100
         thermo = str(model_split[-1])
-
         if thermo == 'T':
             thermostat = True
 
@@ -193,19 +149,19 @@ class HeaterTestApp(QMainWindow):
         elif 'IIB' in model_split:
             enclosure = 'IIB'
         
-        self.update_enclosure_groupbox(enclosure)
+#        self.update_enclosure_groupbox(enclosure)
 
         print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}, Enclosure: {enclosure}")
         return voltage, watts
 
-    def update_enclosure_groupbox(self, enclosure):
-        """Update the QGroupBox title with the enclosure value."""
-        enclosure_groupbox = self.findChild(QGroupBox, "enclosure_groupbox")
-        if enclosure_groupbox:
-            if enclosure == 'IIC':
-                enclosure_groupbox.setTitle(f"Is the IIC Model using xmax housing?")
-            elif enclosure == 'IIB':
-                enclosure_groupbox.setTitle("Is the IIB Model using right housing?")
+#    def update_enclosure_groupbox(self, enclosure):
+#        """Update the QGroupBox title with the enclosure value."""
+#        enclosure_groupbox = self.findChild(QGroupBox, "enclosure_groupbox")
+#        if enclosure_groupbox:
+#            if enclosure == 'IIC':
+#                enclosure_groupbox.setTitle(f"Is the IIC Model using xmax housing?")
+#            elif enclosure == 'IIB':
+#                enclosure_groupbox.setTitle("Is the IIB Model using right housing?")
 
     def convector_read_csv(self, voltage, watts):
         """Read data from CSV based on Voltage and Watts."""
