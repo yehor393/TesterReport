@@ -56,7 +56,7 @@ class HeaterTestApp(QMainWindow):
         
         self.tab_widget.addTab(self.final, "Final")
 
-        self.initialize_boxes_and_bottons()
+        self.initialize_boxes_and_buttons()
 
 
     def initialize_boxes_and_buttons(self):
