@@ -130,7 +130,7 @@
      <bool>true</bool>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="OutsideTab">
      <attribute name="title">
@@ -225,11 +225,31 @@
      <widget class="QCheckBox" name="checkBox_4">
       <property name="geometry">
        <rect>
-        <x>50</x>
-        <y>140</y>
-        <width>121</width>
-        <height>20</height>
+        <x>40</x>
+        <y>110</y>
+        <width>161</width>
+        <height>40</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox::indicator {
+    width: 20px;  /* Розмір квадратика */
+    height: 20px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(default_unchecked.png);  /* Зображення для неактивної галочки */
+}
+
+QCheckBox::indicator:checked {
+    image: url(default_checked.png);  /* Зображення для активної галочки */
+}
+</string>
       </property>
       <property name="text">
        <string>H2 and no tube</string>
@@ -238,11 +258,26 @@
      <widget class="QCheckBox" name="checkBox_5">
       <property name="geometry">
        <rect>
-        <x>50</x>
+        <x>40</x>
         <y>180</y>
-        <width>121</width>
-        <height>20</height>
+        <width>151</width>
+        <height>40</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox::indicator {
+    width: 20px;  /* Розмір квадратика */
+    height: 20px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(default_unchecked.png);  /* Зображення для неактивної галочки */
+}
+
+QCheckBox::indicator:checked {
+    image: url(default_checked.png);  /* Зображення для активної галочки */
+}
+</string>
       </property>
       <property name="text">
        <string>All labels centered  </string>
@@ -251,10 +286,10 @@
      <widget class="QCheckBox" name="checkBox_6">
       <property name="geometry">
        <rect>
-        <x>50</x>
-        <y>220</y>
+        <x>40</x>
+        <y>250</y>
         <width>151</width>
-        <height>20</height>
+        <height>40</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -265,6 +300,21 @@
       </property>
       <property name="layoutDirection">
        <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox::indicator {
+    width: 20px;  /* Розмір квадратика */
+    height: 20px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(default_unchecked.png);  /* Зображення для неактивної галочки */
+}
+
+QCheckBox::indicator:checked {
+    image: url(default_checked.png);  /* Зображення для активної галочки */
+}
+</string>
       </property>
       <property name="text">
        <string>All bolts is tide</string>
