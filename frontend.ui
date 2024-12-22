@@ -130,7 +130,7 @@
      <bool>true</bool>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="OutsideTab">
      <attribute name="title">
@@ -311,18 +311,22 @@
       <property name="geometry">
        <rect>
         <x>100</x>
-        <y>60</y>
-        <width>113</width>
-        <height>22</height>
+        <y>51</y>
+        <width>81</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
+        <pointsize>12</pointsize>
        </font>
       </property>
       <property name="acceptDrops">
        <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
       <property name="dragEnabled">
        <bool>false</bool>
@@ -335,15 +339,19 @@
       <property name="geometry">
        <rect>
         <x>100</x>
-        <y>110</y>
-        <width>113</width>
-        <height>22</height>
+        <y>101</y>
+        <width>81</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
+        <pointsize>12</pointsize>
        </font>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
      <widget class="QCheckBox" name="checkBox">
@@ -402,15 +410,19 @@
       <property name="geometry">
        <rect>
         <x>100</x>
-        <y>160</y>
-        <width>113</width>
-        <height>22</height>
+        <y>151</y>
+        <width>81</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="font">
        <font>
         <family>Arial</family>
+        <pointsize>12</pointsize>
        </font>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
       <property name="readOnly">
        <bool>true</bool>
@@ -573,16 +585,6 @@
      <string>Serial</string>
     </property>
    </widget>
-   <widget class="QDateEdit" name="dateEdit">
-    <property name="geometry">
-     <rect>
-      <x>840</x>
-      <y>720</y>
-      <width>110</width>
-      <height>22</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
@@ -601,7 +603,7 @@
      <string>Build by</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_5">
+   <widget class="QLineEdit" name="build_by">
     <property name="geometry">
      <rect>
       <x>960</x>
@@ -615,6 +617,9 @@
       <family>Arial</family>
       <pointsize>16</pointsize>
      </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
     <property name="placeholderText">
      <string/>
@@ -638,7 +643,7 @@
      <string>Pass by</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="lineEdit_6">
+   <widget class="QLineEdit" name="pass_by">
     <property name="geometry">
      <rect>
       <x>960</x>
@@ -652,6 +657,9 @@
       <family>Arial</family>
       <pointsize>16</pointsize>
      </font>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
     <property name="placeholderText">
      <string/>
@@ -692,6 +700,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
     <property name="placeholderText">
      <string/>
     </property>
@@ -704,6 +715,9 @@
       <width>71</width>
       <height>22</height>
      </rect>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
     <property name="placeholderText">
      <string/>
@@ -744,6 +758,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
     <property name="placeholderText">
      <string/>
     </property>
@@ -757,6 +774,9 @@
       <height>22</height>
      </rect>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
     <property name="placeholderText">
      <string/>
     </property>
@@ -768,7 +788,7 @@
     <property name="geometry">
      <rect>
       <x>1050</x>
-      <y>690</y>
+      <y>710</y>
       <width>171</width>
       <height>61</height>
      </rect>
@@ -791,6 +811,30 @@
     </property>
     <property name="flat">
      <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="datetime_widget">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>720</y>
+      <width>291</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>HH:mm MMMM dd/yyyy</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
   </widget>

@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QLineEdit, QCheckBox, QTabWidget, QPushButton, QLabel
 from PyQt5.uic import loadUi
 from pdf_generator import generate_pdf_report
 import csv
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QDateTime
 import re
 
 class HeaterTestApp(QMainWindow):
@@ -13,15 +13,37 @@ class HeaterTestApp(QMainWindow):
         loadUi("frontend.ui", self)
 
         # Get UI elements
+        # Tabs
         self.tab_widget: QTabWidget = self.findChild(QTabWidget, "tabWidget")
+        
+        # Inputs
         self.serial_input: QLineEdit = self.findChild(QLineEdit, "serial_input")
         self.model_input: QLineEdit = self.findChild(QLineEdit, "line_model")
         self.post_button: QPushButton = self.findChild(QPushButton, "post_button")
+        self.build_by: QLineEdit = self.findChild(QLineEdit, "build_by")
+        self.pass_by: QLineEdit = self.findChild(QLineEdit, "pass_by")
+        self.datetime_widget: QLabel = self.findChild(QLabel, "datetime_widget")
 
+        # Buttons
+        self.post_button: QPushButton = self.findChild(QPushButton, "post_button")
+        
         # Connect signals
         self.post_button.clicked.connect(self.generate_pdf)
         self.model_input.returnPressed.connect(self.on_model_entered)
 
+        # Ensure inputs are always uppercase
+        self.serial_input.setText(self.serial_input.text().upper())
+        self.serial_input.textChanged.connect(lambda: self.serial_input.setText(self.serial_input.text().upper()))
+
+        self.model_input.setText(self.model_input.text().upper())
+        self.model_input.textChanged.connect(lambda: self.model_input.setText(self.model_input.text().upper()))
+
+        self.build_by.setText(self.build_by.text().upper())
+        self.build_by.textChanged.connect(lambda: self.build_by.setText(self.build_by.text().upper()))
+
+        self.pass_by.setText(self.pass_by.text().upper())
+        self.pass_by.textChanged.connect(lambda: self.pass_by.setText(self.pass_by.text().upper()))
+        
         # Save tabs as separate widgets
         self.outside_steam = self.tab_widget.widget(0)
         self.outside_convector = self.tab_widget.widget(1)
@@ -31,7 +53,11 @@ class HeaterTestApp(QMainWindow):
         # Remove all tabs at start
         self.clear_tabs()
 
-        # Flag to prevent redundant calls
+        # Set up real-time date and time updating
+        self.update_datetime()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_datetime)
+        self.timer.start(1000)  # Update every second
         
     def on_model_entered(self):
         """Handle event after entering the model."""
@@ -148,6 +174,8 @@ class HeaterTestApp(QMainWindow):
             enclosure = 'IIC'
         elif 'IIB' in model_split:
             enclosure = 'IIB'
+        else:
+            enclosure = None
         
 #        self.update_enclosure_groupbox(enclosure)
 
@@ -272,4 +300,12 @@ class HeaterTestApp(QMainWindow):
         """Clear all tabs, checkboxes, and text fields after POST."""
         self.clear_all_fields()
         self.clear_tabs()
+        self.serial_input.clear()
+        self.model_input.clear()
         print("clear_after_post called")
+
+    def update_datetime(self):
+        """Update the date and time in the datetime widget."""
+        current_datetime = QDateTime.currentDateTime()
+        formatted_datetime = current_datetime.toString("HH:mm\nMMMM dd/yyyy")
+        self.datetime_widget.setText(formatted_datetime)
