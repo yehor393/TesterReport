@@ -27,6 +27,10 @@ class HeaterTestApp(QMainWindow):
         # Buttons
         self.post_button: QPushButton = self.findChild(QPushButton, "post_button")
         
+        # Checkboxes
+        self.checkBox_h2: QCheckBox = self.findChild(QCheckBox, "checkBox_h2")
+        self.checkBox_h2.setVisible(False)
+
         # Connect signals
         self.post_button.clicked.connect(self.generate_pdf)
         self.model_input.returnPressed.connect(self.on_model_entered)
@@ -75,7 +79,7 @@ class HeaterTestApp(QMainWindow):
         self.clear_tabs()
         if model.startswith("HP"):
             self.tab_widget.addTab(self.outside_steam, "Outside Steam")
-        elif model.startswith("CX1"):
+        elif model.startswith("CX1") or model.startswith("CF1") or model.startswith("XC"):
             self.tab_widget.addTab(self.outside_convector, "Outside Convector")
             self.tab_widget.addTab(self.value, "Value")
             self.convector_value_tab(model)
@@ -162,34 +166,95 @@ class HeaterTestApp(QMainWindow):
         voltage = 0
         watts = 0
         thermostat = False
+        thermo = None
 
         model_split = model.split("-")
-        voltage = int(model_split[1][:3])
-        watts = int(model_split[2][:3]) * 100
-        thermo = str(model_split[-1])
-        if thermo == 'T':
-            thermostat = True
 
-        if 'IIC' in model_split:
-            enclosure = 'IIC'
-        elif 'IIB' in model_split:
-            enclosure = 'IIB'
-        else:
-            enclosure = None
+        checkBox_h2 = self.findChild(QCheckBox, "checkBox_h2")
+        checkBox_maxAmps = self.findChild(QCheckBox, "checkBox_maxAmps")
         
-#        self.update_enclosure_groupbox(enclosure)
+        try:
+            if model.startswith(("CX", "CF")):
+                voltage = int(model_split[1][:3])
+                watts = int(model_split[2][:3]) * 100
+                thermo = str(model_split[-1])
 
-        print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}, Enclosure: {enclosure}")
+                if thermo == 'T':
+                    thermostat = True
+                    checkBox_h2.setVisible(False)
+                    checkBox_maxAmps.setVisible(True)
+                else:
+                    checkBox_h2.setVisible(True)
+
+                if 'IIC' in model_split:
+                    enclosure = 'IIC'
+                elif 'IIB' in model_split:
+                    enclosure = 'IIB'
+                else:
+                    enclosure = None
+                
+                self.update_enclosure_label(enclosure)
+
+            
+            elif model.startswith("XC"):
+                voltage = str(model_split[1][1])
+                watts = str(model_split[1][0])
+                thermo = str(model_split[2][0])
+                print(model_split)
+
+                # Maps for values
+                kilowatts_map = {
+                    "A": 1200,
+                    "B": 1800,
+                    "C": 3600,
+                    "D": 4800,
+                    "E": 7600
+                }
+                voltage_map = {
+                    "1": 120,
+                    "2": 208,
+                    "3": 240,
+                    "4": 480,
+                    "5": 600,
+                    "6": 277
+                }
+
+                # Get values from maps
+                watts = kilowatts_map.get(watts, None)
+                voltage = voltage_map.get(voltage, None)
+                
+            
+            
+        except (FileNotFoundError, ValueError, KeyError, TypeError) as e:
+            print(f"Error reading model: {e}")
+
+
+        if thermo == 'T' or thermo == 'B':
+            thermostat = True
+            checkBox_h2.setVisible(False)
+            checkBox_maxAmps.setVisible(True)
+        else:
+            checkBox_h2.setVisible(True)
+            checkBox_maxAmps.setVisible(False)
+
+
+            print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}")
         return voltage, watts
 
-#    def update_enclosure_groupbox(self, enclosure):
-#        """Update the QGroupBox title with the enclosure value."""
-#        enclosure_groupbox = self.findChild(QGroupBox, "enclosure_groupbox")
-#        if enclosure_groupbox:
-#            if enclosure == 'IIC':
-#                enclosure_groupbox.setTitle(f"Is the IIC Model using xmax housing?")
-#            elif enclosure == 'IIB':
-#                enclosure_groupbox.setTitle("Is the IIB Model using right housing?")
+
+    def update_enclosure_label(self, enclosure):
+        """Update the QGroupBox title with the enclosure value."""
+        enclosure_label = self.findChild(QCheckBox, "enclosure_label")
+        if enclosure_label:
+            if enclosure == 'IIC':
+                enclosure_label.setText("The IIC model uses x-Max® housing and shows no visible damage.")
+            elif enclosure == 'IIB':
+                enclosure_label.setText("The IIB model uses Defender® housing and shows no visible damage.")
+            else:
+                enclosure_label.setText("")
+        else:
+            print("enclosure_label not found")
+
 
     def convector_read_csv(self, voltage, watts):
         """Read data from CSV based on Voltage and Watts."""
