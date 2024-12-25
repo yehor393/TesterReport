@@ -170,14 +170,35 @@ class HeaterTestApp(QMainWindow):
 
         model_split = model.split("-")
 
+        self.update_manual_label(model)
+
         checkBox_h2 = self.findChild(QCheckBox, "checkBox_h2")
+        checkBox_h2.setVisible(False)
+
+        checkBox_enclosure = self.findChild(QCheckBox, "checkBox_enclosure")
+        checkBox_sticker = self.findChild(QCheckBox, "checkBox_sticker")
+        
         checkBox_maxAmps = self.findChild(QCheckBox, "checkBox_maxAmps")
+        checkBox_maxAmps.setVisible(False)
+
+        checkBox_tube = self.findChild(QCheckBox, "checkBox_tube")
+        checkBox_tube.setVisible(False)
+
+        checkBox_CFgroundlug = self.findChild(QCheckBox, "checkBox_CFgroundlug")
+        checkBox_CFgroundlug.setVisible(False)
+
+        checkBox_CFgroundhole = self.findChild(QCheckBox, "checkBox_CFgroundhole")
+        checkBox_CFgroundhole.setVisible(False)
         
         try:
             if model.startswith(("CX", "CF")):
                 voltage = int(model_split[1][:3])
                 watts = int(model_split[2][:3]) * 100
                 thermo = str(model_split[-1])
+
+                if model.startswith("CF"):
+                    checkBox_CFgroundlug.setVisible(True)
+                    checkBox_CFgroundhole.setVisible(True)
 
                 if thermo == 'T':
                     thermostat = True
@@ -194,6 +215,7 @@ class HeaterTestApp(QMainWindow):
                     enclosure = None
                 
                 self.update_enclosure_label(enclosure)
+                checkBox_sticker.setText("Confirm only Ruffneck unit has a 24 hour sticker.")
 
             
             elif model.startswith("XC"):
@@ -218,12 +240,13 @@ class HeaterTestApp(QMainWindow):
                     "5": 600,
                     "6": 277
                 }
-
+            
                 # Get values from maps
                 watts = kilowatts_map.get(watts, None)
                 voltage = voltage_map.get(voltage, None)
-                
             
+                checkBox_sticker.setText("For Private Label Convectors: Confirm Wording 'RUFFNECK Heaters' is not present on heater.")            
+                checkBox_enclosure.setText("The IIB model uses Defender® housing and shows no visible damage.")
             
         except (FileNotFoundError, ValueError, KeyError, TypeError) as e:
             print(f"Error reading model: {e}")
@@ -231,11 +254,10 @@ class HeaterTestApp(QMainWindow):
 
         if thermo == 'T' or thermo == 'B':
             thermostat = True
-            checkBox_h2.setVisible(False)
             checkBox_maxAmps.setVisible(True)
+            checkBox_tube.setVisible(True)
         else:
             checkBox_h2.setVisible(True)
-            checkBox_maxAmps.setVisible(False)
 
 
             print(f"Voltage: {voltage}, Watts: {watts}, Thermostat: {thermostat}")
@@ -254,6 +276,26 @@ class HeaterTestApp(QMainWindow):
                 enclosure_label.setText("")
         else:
             print("enclosure_label not found")
+
+
+    def update_manual_label(self, model):
+        """Update the manual label based on the model."""
+
+        checkBox_manual = self.findChild(QCheckBox, "checkBox_manual")
+
+        model_split = model.split("-")
+        model_value = model_split[0][:2]
+
+        try:
+            with open("tables/manuals.csv", mode="r") as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if str(row["Model"]) == model_value:
+                        manual = row["Manual"]
+                        return checkBox_manual.setText(f"Check against Shop Order to {manual}. Kit is installed.")
+
+        except (FileNotFoundError, ValueError, KeyError) as e:
+            print(f"model not found: {e}")
 
 
     def convector_read_csv(self, voltage, watts):
